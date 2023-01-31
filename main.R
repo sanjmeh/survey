@@ -49,12 +49,15 @@ master[,reco:=case_when(
 )]
 master[,reco:=str_remove(reco,"\\.$")]
 
-final <- master[,para:=paste(reco,collapse = ". "),.(name,qtype,email)] %>% 
-        unique(by = c("name","email","qtype","para")) %>% 
+final <- master[,para:=paste(reco,collapse = ". "),.(name,qtype,email,submitted_on)] %>% 
+        unique() %>% 
         mutate(para = paste0(para,".")) %>% 
-        select(name,email,qtype,para)
+        select(name,email,submitted_on,qtype,para)
         
 final %>% 
-        dcast.data.table(name + email ~ qtype,value.var = "para") %>% 
+        dcast.data.table(name + email + submitted_on ~ qtype,value.var = "para") %>% 
         rename(Learner = name) %>%
         write_sheet(ss = glink,sheet = "recos")
+
+message(paste("Loaded a total of ",nrow(final)," results across ",final[,uniqueN(name)]," students"))
+print(final[,unique(name)])
