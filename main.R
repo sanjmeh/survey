@@ -6,13 +6,17 @@ pacman::p_load(shiny,shinydashboard,readxl, shinydashboardPlus,googlesheets4,tid
 qclass <- fread("question_class.txt",header = T)
 glink <- readLines("links.txt")[1]
 # read the sentences that have to be affixed in recommentation - one time read.
-sndt <- read_excel("SoME Communication Profile Descriptions.xlsx",sheet = "Final") %>% as.data.table()
-strt <- "2023-02-03"
+sndt <- read_excel("SoME Communication Profile Descriptions (1) (1).xlsx",sheet = "Final") %>% as.data.table()
+
+##### modify the survey result file name here only
+survey_result_file = "Survey Responses-SoMECommunicationProfileSMB1.xlsx"
+sheet_name = str_sub(survey_result_file,-9) %>% str_remove(".xlsx")
+strt <- "2023-02-07"
 
 # read and melt survey results - both sheets 1 & 2 separately and then join
-x1 <- read_excel("Survey Responses-SoMECommunicationProfileVersion20.xlsx",sheet = 1,skip = 0) %>% 
+x1 <- read_excel(survey_result_file,sheet = 1,skip = 0) %>% 
         as.data.table() %>% clean_names()
-x2 <- read_excel("Survey Responses-SoMECommunicationProfileVersion20.xlsx",sheet = 2,skip = 1)%>% 
+x2 <- read_excel(survey_result_file,sheet = 2,skip = 1)%>% 
         as.data.table() %>% 
         row_to_names(1) %>% 
         clean_names() %>% 
@@ -71,9 +75,10 @@ final2 <-
         dcast.data.table(name + email + submitted_on ~ qtype,value.var = "para") %>% 
         rename(Learner = name) %>% 
         mutate(date = lubridate::dmy(submitted_on)) %>% 
+        select(-submitted_on) %>% 
         filter(date >= strt)
 
-write_sheet(final2,ss = glink,sheet = "test2")
+write_sheet(final2,ss = glink,sheet = sheet_name)
 
 message(paste("Loaded a total of ",nrow(final)," results across ",final[,uniqueN(name)]," students"))
 print(final[,unique(name)])
